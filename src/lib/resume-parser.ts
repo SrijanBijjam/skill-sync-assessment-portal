@@ -3,7 +3,7 @@ import * as pdfjs from 'pdfjs-dist';
 import { toast } from "@/hooks/use-toast";
 
 // Set the PDF.js worker source
-const pdfjsWorker = await import('pdfjs-dist/build/pdf.worker.entry');
+const pdfjsWorker = await import('pdfjs-dist/build/pdf.worker.mjs');
 pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 // Parse PDF file
