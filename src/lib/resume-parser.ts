@@ -1,11 +1,12 @@
 
-import * as pdfjs from 'pdfjs-dist';
 import { toast } from "@/hooks/use-toast";
 
-// Set the PDF.js worker source
-// Using dynamic import for the worker
-const pdfjsWorker = await import('pdfjs-dist/build/pdf.worker.entry');
-pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+// We'll use a different approach to import pdfjs and set up the worker
+// Import pdfjs globally first
+import * as pdfjs from 'pdfjs-dist';
+
+// Set worker source using a more compatible approach
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 // Parse PDF file
 export async function parsePDF(file: File): Promise<string> {
