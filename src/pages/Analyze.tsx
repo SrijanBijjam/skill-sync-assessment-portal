@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -16,12 +15,44 @@ const Analyze = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [resumeUploaded, setResumeUploaded] = useState(false);
   const [resumeFileName, setResumeFileName] = useState('');
+  const [dragActive, setDragActive] = useState(false);
+  const inputRef = React.useRef<HTMLInputElement>(null);
   
   const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setResumeUploaded(true);
       setResumeFileName(e.target.files[0].name);
     }
+  };
+  
+  // Drag and drop handlers
+  const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      if (file.type === 'application/pdf' || file.name.endsWith('.docx')) {
+        setResumeUploaded(true);
+        setResumeFileName(file.name);
+      } else {
+        alert('Only PDF and DOCX files are accepted.');
+      }
+    }
+  };
+
+  const handleBrowseClick = () => {
+    inputRef.current?.click();
   };
   
   const handleSubmit = (e: React.FormEvent) => {
@@ -96,8 +127,15 @@ const Analyze = () => {
                         <p className="text-gray-600 mb-6">
                           Upload your resume to help us analyze your skills and experience. Accepted formats: PDF, DOCX.
                         </p>
-                        
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                        <div
+                          className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragActive ? 'border-skillsync-300 bg-skillsync-50' : 'border-gray-300'}`}
+                          onDragEnter={handleDrag}
+                          onDragOver={handleDrag}
+                          onDragLeave={handleDrag}
+                          onDrop={handleDrop}
+                          onClick={handleBrowseClick}
+                          style={{ cursor: resumeUploaded ? 'default' : 'pointer' }}
+                        >
                           {!resumeUploaded ? (
                             <>
                               <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
@@ -108,9 +146,10 @@ const Analyze = () => {
                                 className="hidden"
                                 accept=".pdf,.docx"
                                 onChange={handleResumeUpload}
+                                ref={inputRef}
                               />
                               <Label htmlFor="resume">
-                                <Button type="button" variant="outline" className="cursor-pointer">
+                                <Button type="button" variant="outline" className="cursor-pointer" onClick={handleBrowseClick}>
                                   Browse Files
                                 </Button>
                               </Label>
@@ -143,6 +182,7 @@ const Analyze = () => {
                           type="button" 
                           className="gradient-bg border-none"
                           onClick={nextStep}
+                          disabled={!resumeUploaded}
                         >
                           Continue
                         </Button>

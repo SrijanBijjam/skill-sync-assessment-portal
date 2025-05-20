@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,10 +7,12 @@ import { Briefcase, User, Check, Search } from "lucide-react";
 
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { useNavigate } from 'react-router-dom';
 
 const JobMatching = () => {
   const [jobDescription, setJobDescription] = useState('');
   const [isAnalyzed, setIsAnalyzed] = useState(false);
+  const navigate = useNavigate();
   
   const handleSubmitJob = (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,7 +72,7 @@ const JobMatching = () => {
                     </div>
                     
                     <div className="pt-4 border-t">
-                      <Button variant="outline" className="w-full">
+                      <Button variant="outline" className="w-full" onClick={() => navigate('/analyze')}>
                         Edit Your Profile
                       </Button>
                     </div>
