@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -6,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, Check, Award, FileText, MessageSquareQuestion } from "lucide-react";
+import { Upload, Check, Award, FileText } from "lucide-react";
 
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -377,7 +376,7 @@ const Analyze = () => {
                     <div className="space-y-6">
                       <div>
                         <h2 className="text-xl font-semibold mb-4 flex items-center">
-                          <MessageSquareQuestion className="mr-2 h-5 w-5" />
+                          <FileText className="mr-2 h-5 w-5" />
                           Hiring Manager Questions
                         </h2>
                         <p className="text-gray-600 mb-6">
