@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "@/components/ui/sonner";
@@ -77,8 +78,7 @@ const Analyze = () => {
   
   const handleQuestionsSubmit = async (data: HiringManagerQuestions) => {
     setIsSubmitting(true);
-    toast({
-      title: "Submitting your profile",
+    toast("Submitting your profile", {
       description: "Please wait while we process your information..."
     });
 
