@@ -4,13 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Award, FileText } from "lucide-react";
+import { Award, FileText, Code, Briefcase } from "lucide-react";
 
 interface SkillsExperienceStepProps {
   skillsField: string;
   experienceField: string;
+  projectsField?: string;
+  certificationsField?: string;
   onSkillsChange: (skills: string) => void;
   onExperienceChange: (experience: string) => void;
+  onProjectsChange?: (projects: string) => void;
+  onCertificationsChange?: (certifications: string) => void;
   onContinue: () => void;
   onBack: () => void;
 }
@@ -18,8 +22,12 @@ interface SkillsExperienceStepProps {
 const SkillsExperienceStep: React.FC<SkillsExperienceStepProps> = ({
   skillsField,
   experienceField,
+  projectsField = '',
+  certificationsField = '',
   onSkillsChange,
   onExperienceChange,
+  onProjectsChange = () => {},
+  onCertificationsChange = () => {},
   onContinue,
   onBack
 }) => {
@@ -35,7 +43,13 @@ const SkillsExperienceStep: React.FC<SkillsExperienceStepProps> = ({
             
             <div className="space-y-4">
               <div>
-                <Label htmlFor="skills">Technical Skills</Label>
+                <Label 
+                  htmlFor="skills" 
+                  className="flex items-center gap-2"
+                >
+                  <Code className="h-4 w-4" />
+                  Technical Skills
+                </Label>
                 <Textarea 
                   id="skills" 
                   placeholder="List your technical skills (e.g., JavaScript, Python, Project Management, etc.)"
@@ -47,7 +61,13 @@ const SkillsExperienceStep: React.FC<SkillsExperienceStepProps> = ({
               </div>
               
               <div>
-                <Label htmlFor="experience">Work Experience</Label>
+                <Label 
+                  htmlFor="experience" 
+                  className="flex items-center gap-2"
+                >
+                  <Briefcase className="h-4 w-4" />
+                  Work Experience
+                </Label>
                 <Textarea 
                   id="experience" 
                   placeholder="Briefly describe your most relevant work experience"
@@ -55,6 +75,24 @@ const SkillsExperienceStep: React.FC<SkillsExperienceStepProps> = ({
                   rows={4}
                   value={experienceField}
                   onChange={(e) => onExperienceChange(e.target.value)}
+                />
+              </div>
+              
+              <div>
+                <Label 
+                  htmlFor="projects"
+                  className="flex items-center gap-2"
+                >
+                  <FileText className="h-4 w-4" />
+                  Notable Projects
+                </Label>
+                <Textarea 
+                  id="projects" 
+                  placeholder="Describe noteworthy projects you've worked on"
+                  className="mt-1"
+                  rows={4}
+                  value={projectsField}
+                  onChange={(e) => onProjectsChange(e.target.value)}
                 />
               </div>
               
@@ -71,32 +109,8 @@ const SkillsExperienceStep: React.FC<SkillsExperienceStepProps> = ({
                   placeholder="List any professional certifications you have (e.g., AWS Certified Solutions Architect, PMP, CISSP)"
                   className="mt-1"
                   rows={3}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="projects">Notable Projects</Label>
-                <Textarea 
-                  id="projects" 
-                  placeholder="Describe noteworthy projects you've worked on"
-                  className="mt-1"
-                  rows={4}
-                />
-              </div>
-              
-              <div>
-                <Label 
-                  htmlFor="notes" 
-                  className="flex items-center gap-2"
-                >
-                  <FileText className="h-4 w-4" /> 
-                  Additional Notes
-                </Label>
-                <Textarea 
-                  id="notes" 
-                  placeholder="Any additional information or context you'd like to share about your background and career goals"
-                  className="mt-1"
-                  rows={3}
+                  value={certificationsField}
+                  onChange={(e) => onCertificationsChange(e.target.value)}
                 />
               </div>
             </div>

@@ -1,4 +1,3 @@
-
 import React, { useRef, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +11,7 @@ interface ResumeUploadStepProps {
   resumeUploaded: boolean;
   resumeFileName: string;
   isParsingResume: boolean;
-  onResumeProcessed: (text: string, skills: string, experience: string) => void;
+  onResumeProcessed: (text: string, skills: string, experience: string, projects: string, personalInfo: any) => void;
   onResumeStatusChange: (isUploaded: boolean, fileName: string) => void;
   onContinue: () => void;
 }
@@ -33,19 +32,17 @@ const ResumeUploadStep: React.FC<ResumeUploadStepProps> = ({
       try {
         onResumeStatusChange(false, file.name);
         toast.info("Parsing resume...");
-        const extractedText = await parseResume(file);
         
-        // Extract potential skills section
-        const skillsRegex = /skills?:?[\s\n]+([\s\S]*?)(?=\n\s*\n|\n[A-Z]|\n[a-z]+:|\Z)/i;
-        const skillsMatch = extractedText.match(skillsRegex);
-        const skills = skillsMatch && skillsMatch[1] ? skillsMatch[1].trim() : '';
+        const parsedData = await parseResume(file);
         
-        // Extract potential experience section
-        const expRegex = /(?:experience|work|employment)[\s\n:]+?([\s\S]*?)(?=\n\s*\n|\n[A-Z]|\n[a-z]+:|\Z)/i;
-        const expMatch = extractedText.match(expRegex);
-        const experience = expMatch && expMatch[1] ? expMatch[1].trim() : '';
+        onResumeProcessed(
+          parsedData.fullText,
+          parsedData.skills,
+          parsedData.experience,
+          parsedData.projects,
+          parsedData.personalInfo
+        );
         
-        onResumeProcessed(extractedText, skills, experience);
         onResumeStatusChange(true, file.name);
         toast.success("Resume parsed successfully");
       } catch (error) {
@@ -145,7 +142,7 @@ const ResumeUploadStep: React.FC<ResumeUploadStepProps> = ({
                     size="sm"
                     onClick={() => {
                       onResumeStatusChange(false, '');
-                      onResumeProcessed('', '', '');
+                      onResumeProcessed('', '', '', '', {});
                     }}
                   >
                     Remove

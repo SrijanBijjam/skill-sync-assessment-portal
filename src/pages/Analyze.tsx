@@ -5,12 +5,21 @@ import { toast } from "@/components/ui/sonner";
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
-// Import our new components
+// Import our components
 import StepProgress from '@/components/analyze/StepProgress';
 import ResumeUploadStep from '@/components/analyze/ResumeUploadStep';
 import SkillsExperienceStep from '@/components/analyze/SkillsExperienceStep';
 import PersonalInfoStep from '@/components/analyze/PersonalInfoStep';
 import QuestionsStep from '@/components/analyze/QuestionsStep';
+
+interface PersonalInfo {
+  name?: string;
+  email?: string;
+  phone?: string;
+  location?: string;
+  linkedin?: string;
+  github?: string;
+}
 
 const Analyze = () => {
   const navigate = useNavigate();
@@ -19,8 +28,15 @@ const Analyze = () => {
   const [resumeFileName, setResumeFileName] = useState('');
   const [isParsingResume, setIsParsingResume] = useState(false);
   const [resumeText, setResumeText] = useState('');
+  
+  // Skills and experience data
   const [skillsField, setSkillsField] = useState('');
   const [experienceField, setExperienceField] = useState('');
+  const [projectsField, setProjectsField] = useState('');
+  const [certificationsField, setCertificationsField] = useState('');
+  
+  // Personal info data
+  const [personalInfo, setPersonalInfo] = useState<PersonalInfo>({});
   
   const handleResumeStatusChange = (isUploaded: boolean, fileName: string) => {
     setResumeUploaded(isUploaded);
@@ -28,10 +44,18 @@ const Analyze = () => {
     setIsParsingResume(!isUploaded && fileName !== '');
   };
   
-  const handleResumeProcessed = (text: string, skills: string, experience: string) => {
+  const handleResumeProcessed = (
+    text: string, 
+    skills: string, 
+    experience: string, 
+    projects: string,
+    extractedPersonalInfo: PersonalInfo
+  ) => {
     setResumeText(text);
     setSkillsField(skills);
     setExperienceField(experience);
+    setProjectsField(projects);
+    setPersonalInfo(extractedPersonalInfo);
     setIsParsingResume(false);
   };
   
@@ -84,8 +108,12 @@ const Analyze = () => {
                 <SkillsExperienceStep
                   skillsField={skillsField}
                   experienceField={experienceField}
+                  projectsField={projectsField}
+                  certificationsField={certificationsField}
                   onSkillsChange={setSkillsField}
                   onExperienceChange={setExperienceField}
+                  onProjectsChange={setProjectsField}
+                  onCertificationsChange={setCertificationsField}
                   onContinue={nextStep}
                   onBack={prevStep}
                 />
@@ -94,6 +122,7 @@ const Analyze = () => {
               {/* Step 3: Personal Information */}
               {currentStep === 3 && (
                 <PersonalInfoStep
+                  personalInfo={personalInfo}
                   onContinue={nextStep}
                   onBack={prevStep}
                 />
