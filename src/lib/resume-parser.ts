@@ -1,4 +1,3 @@
-
 // Import PDF.js with correct path for ES5 modules
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf';
 import { GlobalWorkerOptions } from 'pdfjs-dist/legacy/build/pdf';
@@ -14,25 +13,39 @@ GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/$
  */
 export async function extractTextFromPDF(file: File): Promise<string> {
   try {
-    // Convert the file to an ArrayBuffer
     const arrayBuffer = await file.arrayBuffer();
-    
-    // Load the PDF document
     const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
-    
+
     let fullText = '';
-    
-    // Extract text from each page
+
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
       const textContent = await page.getTextContent();
-      const textItems = textContent.items.map((item: any) => 
-        'str' in item ? item.str : '');
-      
-      fullText += textItems.join(' ') + '\n';
+
+      let prevY: number | null = null;
+      let pageText = '';
+
+      textContent.items.forEach((item: any) => {
+        const str = item.str as string;
+        const transform = item.transform as number[];
+        const y = transform[5]; // y position
+
+        // Insert a newline when the y-position decreases (new line) or when PDF.js indicates end of line
+        if (prevY !== null && Math.abs(prevY - y) > 2) {
+          pageText += '\n';
+        }
+
+        pageText += str + ' ';
+        if (item.hasEOL) {
+          pageText += '\n';
+        }
+        prevY = y;
+      });
+
+      fullText += pageText + '\n';
     }
-    
-    return fullText;
+
+    return fullText.trim();
   } catch (error) {
     console.error('Error extracting text from PDF:', error);
     throw new Error('Failed to extract text from PDF');
@@ -57,10 +70,25 @@ interface ParsedResumeData {
 }
 
 /**
- * Extract specific resume sections using pattern matching
+ * Helper: scan lines to grab all text between a heading match and next heading.
+ */
+function collectSection(lines: string[], startIndex: number, headingMatchers: RegExp[]): { content: string; nextIndex: number } {
+  const collected: string[] = [];
+  let i = startIndex + 1; // skip the heading line
+  for (; i < lines.length; i++) {
+    const line = lines[i];
+    if (headingMatchers.some(r => r.test(line))) {
+      break;
+    }
+    collected.push(line);
+  }
+  return { content: collected.join('\n').trim(), nextIndex: i };
+}
+
+/**
+ * Extract specific resume sections using pattern matching + line scanning
  */
 export function extractSections(text: string): ParsedResumeData {
-  // Initialize return structure
   const result: ParsedResumeData = {
     fullText: text,
     personalInfo: {},
@@ -71,11 +99,27 @@ export function extractSections(text: string): ParsedResumeData {
     certifications: '',
   };
 
-  // Extract personal information
-  // Name extraction - often at the top of resume
-  const nameMatch = text.match(/^([A-Z][a-z]+(\s[A-Z][a-z]+)+)/m);
-  if (nameMatch) result.personalInfo.name = nameMatch[1].trim();
+  // Attempt to extract name from very first non-empty line if uppercase
+  const allLines = text.split(/\n+/).map(l => l.trim()).filter(Boolean);
+  if (allLines.length) {
+    const firstLine = allLines[0];
+    if (/^[A-Z\s]+$/.test(firstLine) && firstLine.split(' ').length <= 4) {
+      const titleCaseName = firstLine
+        .split(' ') 
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+      result.personalInfo.name = titleCaseName;
+    }
+  }
 
+  if (!result.personalInfo.name) {
+    const nameMatch = text.match(/^[A-Z][a-z]+(?:\s[A-Z][a-z]+)+/m);
+    if (nameMatch) {
+      result.personalInfo.name = nameMatch[0].trim();
+    }
+  }
+
+  // Extract personal information
   // Email extraction
   const emailMatch = text.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/);
   if (emailMatch) result.personalInfo.email = emailMatch[0];
@@ -84,9 +128,9 @@ export function extractSections(text: string): ParsedResumeData {
   const phoneMatch = text.match(/\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
   if (phoneMatch) result.personalInfo.phone = phoneMatch[0];
 
-  // Location extraction - common pattern for city, state, etc.
-  const locationMatch = text.match(/([A-Za-z\s]+,\s*[A-Z]{2})/);
-  if (locationMatch) result.personalInfo.location = locationMatch[0];
+  // Updated Location extraction - start-of-line and city,state pattern without name
+  const locationMatch = text.match(/(?:^|\n)\s*([A-Za-z .'-]+,\s*[A-Z]{2})(?=\b)/);
+  if (locationMatch) result.personalInfo.location = locationMatch[1];
 
   // LinkedIn URL extraction
   const linkedinMatch = text.match(/linkedin\.com\/in\/[A-Za-z0-9_-]+/);
@@ -96,39 +140,68 @@ export function extractSections(text: string): ParsedResumeData {
   const githubMatch = text.match(/github\.com\/[A-Za-z0-9_-]+/);
   if (githubMatch) result.personalInfo.github = `https://${githubMatch[0]}`;
 
-  // Extract skills section - look for various headings
-  const skillsRegex = /(?:SKILLS|TECHNICAL SKILLS|CORE COMPETENCIES|TECHNOLOGIES|EXPERTISE|PROFICIENCIES|TECHNICAL EXPERTISE)[:\s]*\n+([\s\S]*?)(?=\n\s*\n|\n[A-Z][A-Z\s]+[:\s]*\n|\Z)/i;
-  const skillsMatch = text.match(skillsRegex);
-  if (skillsMatch && skillsMatch[1]) {
-    result.skills = skillsMatch[1].trim().replace(/\n+/g, ', ');
+  // Build line array for section scanning
+  const headingMap: { key: keyof ParsedResumeData; patterns: RegExp[] }[] = [
+    {
+      key: 'skills',
+      patterns: [/^SKILLS\b.*$/i, /^TECHNICAL SKILLS\b.*$/i, /^CORE COMPETENCIES\b.*$/i, /^TECHNOLOGIES\b.*$/i],
+    },
+    {
+      key: 'experience',
+      patterns: [/^WORK EXPERIENCE\b.*$/i, /^EXPERIENCE\b.*$/i, /^PROFESSIONAL EXPERIENCE\b.*$/i, /^EMPLOYMENT HISTORY\b.*$/i],
+    },
+    {
+      key: 'projects',
+      patterns: [/^PROJECTS\b.*$/i, /^PROJECTS & RESEARCH\b.*$/i, /^NOTABLE PROJECTS\b.*$/i, /^PERSONAL PROJECTS\b.*$/i],
+    },
+    {
+      key: 'education',
+      patterns: [/^EDUCATION$/i],
+    },
+    {
+      key: 'certifications',
+      patterns: [/^CERTIFICATIONS$/i, /^CERTIFICATES$/i],
+    },
+  ];
+
+  // Precompute all headings regex list to use as stop markers
+  const stopMatchers = headingMap.flatMap(h => h.patterns);
+
+  // Scan lines
+  for (let i = 0; i < allLines.length; i++) {
+    const line = allLines[i];
+    for (const h of headingMap) {
+      if (h.patterns.some(r => r.test(line))) {
+        const { content, nextIndex } = collectSection(allLines, i, stopMatchers);
+        if (content && !result[h.key]) {
+          result[h.key] = content;
+        }
+        i = nextIndex - 1;
+        break;
+      }
+    }
   }
 
-  // Extract experience section - look for various headings
-  const experienceRegex = /(?:EXPERIENCE|WORK EXPERIENCE|PROFESSIONAL EXPERIENCE|EMPLOYMENT HISTORY|CAREER HISTORY|WORK HISTORY)[:\s]*\n+([\s\S]*?)(?=\n\s*\n\s*(?:EDUCATION|SKILLS|PROJECTS|CERTIFICATIONS|ACHIEVEMENTS|AWARDS|PUBLICATIONS|LANGUAGES|INTERESTS|ACTIVITIES|VOLUNTEER|REFERENCES|ADDITIONAL)[A-Z\s]*[:\s]*\n|\Z)/i;
-  const experienceMatch = text.match(experienceRegex);
-  if (experienceMatch && experienceMatch[1]) {
-    result.experience = experienceMatch[1].trim();
+  // Post-process skills to merge lines and remove sub-labels
+  if (result.skills) {
+    result.skills = result.skills
+      .replace(/^(?:Tools & Technologies|Programming Languages)[:\s]*/gim, '')
+      .replace(/\n+/g, ', ')
+      .replace(/\s{2,}/g, ' ')
+      .replace(/\s+,/g, ',')
+      .replace(/,\s+/g, ', ')
+      .trim();
   }
 
-  // Extract projects section - look for various headings
-  const projectsRegex = /(?:PROJECTS|SOFTWARE PROJECTS|PERSONAL PROJECTS|KEY PROJECTS|NOTABLE PROJECTS|RELEVANT PROJECTS)[:\s]*\n+([\s\S]*?)(?=\n\s*\n\s*(?:EDUCATION|EXPERIENCE|SKILLS|CERTIFICATIONS|ACHIEVEMENTS|AWARDS|PUBLICATIONS|LANGUAGES|INTERESTS|ACTIVITIES|VOLUNTEER|REFERENCES|ADDITIONAL)[A-Z\s]*[:\s]*\n|\Z)/i;
-  const projectsMatch = text.match(projectsRegex);
-  if (projectsMatch && projectsMatch[1]) {
-    result.projects = projectsMatch[1].trim();
-  }
-
-  // Extract education section
-  const educationRegex = /(?:EDUCATION|ACADEMIC BACKGROUND|ACADEMIC QUALIFICATIONS|EDUCATIONAL BACKGROUND)[:\s]*\n+([\s\S]*?)(?=\n\s*\n\s*(?:EXPERIENCE|SKILLS|PROJECTS|CERTIFICATIONS|ACHIEVEMENTS|AWARDS|PUBLICATIONS|LANGUAGES|INTERESTS|ACTIVITIES|VOLUNTEER|REFERENCES|ADDITIONAL)[A-Z\s]*[:\s]*\n|\Z)/i;
-  const educationMatch = text.match(educationRegex);
-  if (educationMatch && educationMatch[1]) {
-    result.education = educationMatch[1].trim();
-  }
-
-  // Extract certifications section
-  const certificationsRegex = /(?:CERTIFICATIONS|CERTIFICATES|PROFESSIONAL CERTIFICATIONS|ACCREDITATIONS)[:\s]*\n+([\s\S]*?)(?=\n\s*\n\s*(?:EDUCATION|EXPERIENCE|SKILLS|PROJECTS|ACHIEVEMENTS|AWARDS|PUBLICATIONS|LANGUAGES|INTERESTS|ACTIVITIES|VOLUNTEER|REFERENCES|ADDITIONAL)[A-Z\s]*[:\s]*\n|\Z)/i;
-  const certificationsMatch = text.match(certificationsRegex);
-  if (certificationsMatch && certificationsMatch[1]) {
-    result.certifications = certificationsMatch[1].trim();
+  // If location not found, try to get first city, state in top 10 lines
+  if (!result.personalInfo.location) {
+    for (let i = 0; i < Math.min(10, allLines.length); i++) {
+      const m = allLines[i].match(/([A-Za-z .'-]+,\s*[A-Z]{2})(?=\b)/);
+      if (m) {
+        result.personalInfo.location = m[1];
+        break;
+      }
+    }
   }
 
   return result;
