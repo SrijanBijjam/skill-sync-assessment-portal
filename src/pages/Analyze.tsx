@@ -1,5 +1,4 @@
-
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "@/components/ui/sonner";
 import Navbar from '@/components/Navbar';
@@ -17,6 +16,7 @@ const Analyze = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = React.useState(1);
   const [isParsingResume, setIsParsingResume] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const {
     profileData,
@@ -75,9 +75,21 @@ const Analyze = () => {
     updatePersonalInfo(data);
   };
   
-  const handleQuestionsSubmit = (data: HiringManagerQuestions) => {
+  const handleQuestionsSubmit = async (data: HiringManagerQuestions) => {
+    setIsSubmitting(true);
+    toast({
+      title: "Submitting your profile",
+      description: "Please wait while we process your information..."
+    });
+
+    // Update the hiring manager questions
     updateHiringManagerQuestions(data);
-    navigate('/job-matching');
+
+    // Navigate to job matching page after short delay
+    setTimeout(() => {
+      setIsSubmitting(false);
+      navigate('/job-matching');
+    }, 1500);
   };
   
   const nextStep = () => {
@@ -88,6 +100,50 @@ const Analyze = () => {
   const prevStep = () => {
     setCurrentStep(current => current - 1);
     window.scrollTo(0, 0);
+  };
+  
+  const renderStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <ResumeUploadStep
+            resumeUploaded={profileData.resumeUploaded}
+            resumeFileName={profileData.resumeFileName}
+            isParsingResume={isParsingResume}
+            onResumeProcessed={handleResumeProcessed}
+            onResumeStatusChange={handleResumeStatusChange}
+            onContinue={nextStep}
+          />
+        );
+      case 2:
+        return (
+          <SkillsExperienceStep
+            initialData={profileData.skillsExperience}
+            onSubmit={handleSkillsExperienceSubmit}
+            onContinue={nextStep}
+            onBack={prevStep}
+          />
+        );
+      case 3:
+        return (
+          <PersonalInfoStep
+            personalInfo={profileData.personalInfo}
+            onSubmit={handlePersonalInfoSubmit}
+            onContinue={nextStep}
+            onBack={prevStep}
+          />
+        );
+      case 4:
+        return (
+          <QuestionsStep
+            initialData={profileData.hiringManagerQuestions}
+            onSubmit={handleQuestionsSubmit}
+            onBack={prevStep}
+          />
+        );
+      default:
+        return null;
+    }
   };
   
   // Show loading state while initially loading profile data
@@ -110,59 +166,25 @@ const Analyze = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <main className="flex-grow py-12">
-        <div className="container-custom">
-          <div className="max-w-3xl mx-auto">
-            <div className="mb-10 text-center">
-              <h1 className="text-3xl md:text-4xl font-bold mb-4">Professional Profile Analysis</h1>
-              <p className="text-lg text-gray-600">
-                Complete your profile to get personalized job match insights
+      <main className="flex-grow py-10">
+        <div className="container">
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold mb-2">Build Your Profile</h1>
+              <p className="text-gray-600">
+                Complete your professional profile to get matched with job opportunities.
               </p>
             </div>
-            
-            {/* Progress Steps */}
+
             <StepProgress currentStep={currentStep} />
             
-            <div className="form-container">
-              {/* Step 1: Resume Upload */}
-              {currentStep === 1 && (
-                <ResumeUploadStep
-                  resumeUploaded={profileData.resumeUploaded}
-                  resumeFileName={profileData.resumeFileName}
-                  isParsingResume={isParsingResume}
-                  onResumeProcessed={handleResumeProcessed}
-                  onResumeStatusChange={handleResumeStatusChange}
-                  onContinue={nextStep}
-                />
-              )}
-              
-              {/* Step 2: Skills & Experience */}
-              {currentStep === 2 && (
-                <SkillsExperienceStep
-                  initialData={profileData.skillsExperience}
-                  onSubmit={handleSkillsExperienceSubmit}
-                  onContinue={nextStep}
-                  onBack={prevStep}
-                />
-              )}
-              
-              {/* Step 3: Personal Information */}
-              {currentStep === 3 && (
-                <PersonalInfoStep
-                  personalInfo={profileData.personalInfo}
-                  onSubmit={handlePersonalInfoSubmit}
-                  onContinue={nextStep}
-                  onBack={prevStep}
-                />
-              )}
-              
-              {/* Step 4: Questions */}
-              {currentStep === 4 && (
-                <QuestionsStep
-                  initialData={profileData.hiringManagerQuestions}
-                  onSubmit={handleQuestionsSubmit}
-                  onBack={prevStep}
-                />
+            <div className="mt-8">
+              {isLoading ? (
+                <div className="flex justify-center py-20">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-skillsync-700"></div>
+                </div>
+              ) : (
+                renderStep()
               )}
             </div>
           </div>

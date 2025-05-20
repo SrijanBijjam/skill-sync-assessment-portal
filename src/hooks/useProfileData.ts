@@ -27,6 +27,15 @@ export interface HiringManagerQuestions {
   performanceOptimization: string;
 }
 
+export interface JobMatchAnalysis {
+  score: number;
+  strengths: string[];
+  gaps: string[];
+  recommendations: string[];
+  skillsAnalysis?: { [key: string]: number };
+  summary?: string;
+}
+
 export interface ProfileData {
   resumeUploaded: boolean;
   resumeFileName: string;
@@ -35,12 +44,7 @@ export interface ProfileData {
   personalInfo: PersonalInfo;
   hiringManagerQuestions: HiringManagerQuestions;
   profileSummary?: string;
-  jobMatchAnalysis?: {
-    score?: number;
-    strengths?: string[];
-    gaps?: string[];
-    recommendations?: string[];
-  };
+  jobMatchAnalysis?: JobMatchAnalysis;
   lastUpdated: number; // timestamp
 }
 
@@ -141,6 +145,20 @@ export function useProfileData() {
     }));
   };
 
+  const updateProfileSummary = (summary: string) => {
+    setProfileData(prev => ({
+      ...prev,
+      profileSummary: summary
+    }));
+  };
+
+  const updateJobMatchAnalysis = (analysis: JobMatchAnalysis) => {
+    setProfileData(prev => ({
+      ...prev,
+      jobMatchAnalysis: analysis
+    }));
+  };
+
   const resetProfileData = () => {
     setProfileData(initialProfileData);
     localStorage.removeItem(PROFILE_DATA_KEY);
@@ -153,6 +171,8 @@ export function useProfileData() {
     updateSkillsExperience,
     updatePersonalInfo,
     updateHiringManagerQuestions,
+    updateProfileSummary,
+    updateJobMatchAnalysis,
     resetProfileData
   };
 }
