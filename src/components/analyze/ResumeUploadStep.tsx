@@ -1,0 +1,174 @@
+
+import React, { useRef, useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
+import { Upload, Check, Loader2 } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
+import { parseResume } from '@/lib/resume-parser';
+
+interface ResumeUploadStepProps {
+  resumeUploaded: boolean;
+  resumeFileName: string;
+  isParsingResume: boolean;
+  onResumeProcessed: (text: string, skills: string, experience: string) => void;
+  onResumeStatusChange: (isUploaded: boolean, fileName: string) => void;
+  onContinue: () => void;
+}
+
+const ResumeUploadStep: React.FC<ResumeUploadStepProps> = ({
+  resumeUploaded,
+  resumeFileName,
+  isParsingResume,
+  onResumeProcessed,
+  onResumeStatusChange,
+  onContinue
+}) => {
+  const [dragActive, setDragActive] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  
+  const processResumeFile = async (file: File) => {
+    if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+      try {
+        onResumeStatusChange(false, file.name);
+        toast.info("Parsing resume...");
+        const extractedText = await parseResume(file);
+        
+        // Extract potential skills section
+        const skillsRegex = /skills?:?[\s\n]+([\s\S]*?)(?=\n\s*\n|\n[A-Z]|\n[a-z]+:|\Z)/i;
+        const skillsMatch = extractedText.match(skillsRegex);
+        const skills = skillsMatch && skillsMatch[1] ? skillsMatch[1].trim() : '';
+        
+        // Extract potential experience section
+        const expRegex = /(?:experience|work|employment)[\s\n:]+?([\s\S]*?)(?=\n\s*\n|\n[A-Z]|\n[a-z]+:|\Z)/i;
+        const expMatch = extractedText.match(expRegex);
+        const experience = expMatch && expMatch[1] ? expMatch[1].trim() : '';
+        
+        onResumeProcessed(extractedText, skills, experience);
+        onResumeStatusChange(true, file.name);
+        toast.success("Resume parsed successfully");
+      } catch (error) {
+        console.error("Error parsing resume:", error);
+        toast.error("Failed to parse resume. Please try again.");
+        onResumeStatusChange(false, '');
+      }
+    } else if (file.name.endsWith('.docx')) {
+      toast.error("DOCX files are not yet supported. Please upload a PDF.");
+    } else {
+      toast.error("Unsupported file format. Please upload a PDF file.");
+    }
+  };
+  
+  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      await processResumeFile(e.target.files[0]);
+    }
+  };
+  
+  const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const file = e.dataTransfer.files[0];
+      await processResumeFile(file);
+    }
+  };
+
+  const handleBrowseClick = () => {
+    inputRef.current?.click();
+  };
+  
+  return (
+    <Card className="animate-fade-in">
+      <CardContent className="pt-6">
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Upload Your Resume</h2>
+            <p className="text-gray-600 mb-6">
+              Upload your resume to help us analyze your skills and experience. Currently supporting PDF files only.
+            </p>
+            <div
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragActive ? 'border-skillsync-300 bg-skillsync-50' : 'border-gray-300'}`}
+              onDragEnter={handleDrag}
+              onDragOver={handleDrag}
+              onDragLeave={handleDrag}
+              onDrop={handleDrop}
+              onClick={isParsingResume || resumeUploaded ? undefined : handleBrowseClick}
+              style={{ cursor: isParsingResume ? 'wait' : resumeUploaded ? 'default' : 'pointer' }}
+            >
+              {isParsingResume ? (
+                <div className="flex flex-col items-center">
+                  <Loader2 className="h-12 w-12 text-skillsync-300 animate-spin mb-4" />
+                  <p className="text-lg font-medium">Parsing resume...</p>
+                  <p className="text-gray-500 mb-4">This may take a few moments</p>
+                </div>
+              ) : !resumeUploaded ? (
+                <>
+                  <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <p className="text-gray-600 mb-4">Drag and drop your resume here, or click to browse</p>
+                  <Input
+                    type="file"
+                    id="resume"
+                    className="hidden"
+                    accept=".pdf"
+                    onChange={handleResumeUpload}
+                    ref={inputRef}
+                  />
+                  <Label htmlFor="resume">
+                    <Button type="button" variant="outline" className="cursor-pointer" onClick={handleBrowseClick}>
+                      Browse Files
+                    </Button>
+                  </Label>
+                </>
+              ) : (
+                <div className="flex flex-col items-center">
+                  <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
+                    <Check className="h-8 w-8 text-green-600" />
+                  </div>
+                  <p className="text-lg font-medium">{resumeFileName}</p>
+                  <p className="text-gray-500 mb-4">Successfully uploaded</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      onResumeStatusChange(false, '');
+                      onResumeProcessed('', '', '');
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex justify-end">
+            <Button 
+              type="button" 
+              className="gradient-bg border-none"
+              onClick={onContinue}
+              disabled={!resumeUploaded || isParsingResume}
+            >
+              Continue
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default ResumeUploadStep;

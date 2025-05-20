@@ -1,7 +1,7 @@
 
-// We need to import the ES module version of pdfjs-dist
-import * as pdfjs from 'pdfjs-dist/es5/build/pdf';
-import { GlobalWorkerOptions } from 'pdfjs-dist/es5/build/pdf';
+// Import PDF.js with correct path for ES5 modules
+import * as pdfjs from 'pdfjs-dist/legacy/build/pdf';
+import { GlobalWorkerOptions } from 'pdfjs-dist/legacy/build/pdf';
 
 // Initialize PDF.js worker (required for PDF parsing)
 const pdfjsVersion = '2.16.105'; // Match the version we're using
