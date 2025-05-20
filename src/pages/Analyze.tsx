@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "@/components/ui/sonner";
 import Navbar from '@/components/Navbar';
@@ -11,37 +11,35 @@ import ResumeUploadStep from '@/components/analyze/ResumeUploadStep';
 import SkillsExperienceStep from '@/components/analyze/SkillsExperienceStep';
 import PersonalInfoStep from '@/components/analyze/PersonalInfoStep';
 import QuestionsStep from '@/components/analyze/QuestionsStep';
-
-interface PersonalInfo {
-  name?: string;
-  email?: string;
-  phone?: string;
-  location?: string;
-  linkedin?: string;
-  github?: string;
-}
+import { useProfileData, PersonalInfo, SkillsExperience, HiringManagerQuestions } from '@/hooks/useProfileData';
 
 const Analyze = () => {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(1);
-  const [resumeUploaded, setResumeUploaded] = useState(false);
-  const [resumeFileName, setResumeFileName] = useState('');
-  const [isParsingResume, setIsParsingResume] = useState(false);
-  const [resumeText, setResumeText] = useState('');
+  const [currentStep, setCurrentStep] = React.useState(1);
+  const [isParsingResume, setIsParsingResume] = React.useState(false);
   
-  // Skills and experience data
-  const [skillsField, setSkillsField] = useState('');
-  const [experienceField, setExperienceField] = useState('');
-  const [projectsField, setProjectsField] = useState('');
-  const [certificationsField, setCertificationsField] = useState('');
+  const {
+    profileData,
+    isLoading,
+    updateResumeData,
+    updateSkillsExperience,
+    updatePersonalInfo,
+    updateHiringManagerQuestions
+  } = useProfileData();
   
-  // Personal info data
-  const [personalInfo, setPersonalInfo] = useState<PersonalInfo>({});
+  // If we have profile data and are on step 1 with a resume already uploaded, skip to step 2
+  useEffect(() => {
+    if (!isLoading && profileData.resumeUploaded && currentStep === 1) {
+      toast.info("Resuming from your last session");
+    }
+  }, [isLoading, profileData.resumeUploaded, currentStep]);
   
   const handleResumeStatusChange = (isUploaded: boolean, fileName: string) => {
-    setResumeUploaded(isUploaded);
-    setResumeFileName(fileName);
     setIsParsingResume(!isUploaded && fileName !== '');
+    updateResumeData({
+      resumeUploaded: isUploaded,
+      resumeFileName: fileName,
+    });
   };
   
   const handleResumeProcessed = (
@@ -51,12 +49,35 @@ const Analyze = () => {
     projects: string,
     extractedPersonalInfo: PersonalInfo
   ) => {
-    setResumeText(text);
-    setSkillsField(skills);
-    setExperienceField(experience);
-    setProjectsField(projects);
-    setPersonalInfo(extractedPersonalInfo);
+    // Update resume text
+    updateResumeData({
+      resumeText: text,
+    });
+    
+    // Update skills and experience
+    updateSkillsExperience({
+      skills,
+      experience,
+      projects,
+    });
+    
+    // Update personal info
+    updatePersonalInfo(extractedPersonalInfo);
+    
     setIsParsingResume(false);
+  };
+  
+  const handleSkillsExperienceSubmit = (data: SkillsExperience) => {
+    updateSkillsExperience(data);
+  };
+  
+  const handlePersonalInfoSubmit = (data: PersonalInfo) => {
+    updatePersonalInfo(data);
+  };
+  
+  const handleQuestionsSubmit = (data: HiringManagerQuestions) => {
+    updateHiringManagerQuestions(data);
+    navigate('/job-matching');
   };
   
   const nextStep = () => {
@@ -69,9 +90,21 @@ const Analyze = () => {
     window.scrollTo(0, 0);
   };
   
-  const handleSubmit = () => {
-    navigate('/job-matching');
-  };
+  // Show loading state while initially loading profile data
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow py-12 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-skillsync-500 mx-auto mb-4"></div>
+            <p className="text-lg text-gray-600">Loading your profile...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -90,12 +123,12 @@ const Analyze = () => {
             {/* Progress Steps */}
             <StepProgress currentStep={currentStep} />
             
-            <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+            <div className="form-container">
               {/* Step 1: Resume Upload */}
               {currentStep === 1 && (
                 <ResumeUploadStep
-                  resumeUploaded={resumeUploaded}
-                  resumeFileName={resumeFileName}
+                  resumeUploaded={profileData.resumeUploaded}
+                  resumeFileName={profileData.resumeFileName}
                   isParsingResume={isParsingResume}
                   onResumeProcessed={handleResumeProcessed}
                   onResumeStatusChange={handleResumeStatusChange}
@@ -106,14 +139,8 @@ const Analyze = () => {
               {/* Step 2: Skills & Experience */}
               {currentStep === 2 && (
                 <SkillsExperienceStep
-                  skillsField={skillsField}
-                  experienceField={experienceField}
-                  projectsField={projectsField}
-                  certificationsField={certificationsField}
-                  onSkillsChange={setSkillsField}
-                  onExperienceChange={setExperienceField}
-                  onProjectsChange={setProjectsField}
-                  onCertificationsChange={setCertificationsField}
+                  initialData={profileData.skillsExperience}
+                  onSubmit={handleSkillsExperienceSubmit}
                   onContinue={nextStep}
                   onBack={prevStep}
                 />
@@ -122,7 +149,8 @@ const Analyze = () => {
               {/* Step 3: Personal Information */}
               {currentStep === 3 && (
                 <PersonalInfoStep
-                  personalInfo={personalInfo}
+                  personalInfo={profileData.personalInfo}
+                  onSubmit={handlePersonalInfoSubmit}
                   onContinue={nextStep}
                   onBack={prevStep}
                 />
@@ -131,11 +159,12 @@ const Analyze = () => {
               {/* Step 4: Questions */}
               {currentStep === 4 && (
                 <QuestionsStep
-                  onSubmit={handleSubmit}
+                  initialData={profileData.hiringManagerQuestions}
+                  onSubmit={handleQuestionsSubmit}
                   onBack={prevStep}
                 />
               )}
-            </form>
+            </div>
           </div>
         </div>
       </main>
