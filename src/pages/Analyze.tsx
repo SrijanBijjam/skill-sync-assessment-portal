@@ -5,7 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, Check, Award, FileText } from "lucide-react";
+import { Upload, Check, Award, FileText, Loader2 } from "lucide-react";
+import { toast } from "@/components/ui/sonner";
+import { parseResume } from '@/lib/resume-parser';
+import { Skeleton } from "@/components/ui/skeleton";
 
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -16,12 +19,55 @@ const Analyze = () => {
   const [resumeUploaded, setResumeUploaded] = useState(false);
   const [resumeFileName, setResumeFileName] = useState('');
   const [dragActive, setDragActive] = useState(false);
+  const [isParsingResume, setIsParsingResume] = useState(false);
+  const [resumeText, setResumeText] = useState('');
+  const [skillsField, setSkillsField] = useState('');
+  const [experienceField, setExperienceField] = useState('');
   const inputRef = React.useRef<HTMLInputElement>(null);
   
-  const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const processResumeFile = async (file: File) => {
+    if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+      try {
+        setIsParsingResume(true);
+        const extractedText = await parseResume(file);
+        setResumeText(extractedText);
+        
+        // Try to extract skills and experience sections based on common headings
+        const lowerText = extractedText.toLowerCase();
+        
+        // Extract potential skills section
+        const skillsRegex = /skills?:?[\s\n]+([\s\S]*?)(?=\n\s*\n|\n[A-Z]|\n[a-z]+:|\Z)/i;
+        const skillsMatch = extractedText.match(skillsRegex);
+        if (skillsMatch && skillsMatch[1]) {
+          setSkillsField(skillsMatch[1].trim());
+        }
+        
+        // Extract potential experience section
+        const expRegex = /(?:experience|work|employment)[\s\n:]+?([\s\S]*?)(?=\n\s*\n|\n[A-Z]|\n[a-z]+:|\Z)/i;
+        const expMatch = extractedText.match(expRegex);
+        if (expMatch && expMatch[1]) {
+          setExperienceField(expMatch[1].trim());
+        }
+        
+        setResumeUploaded(true);
+        setResumeFileName(file.name);
+        toast.success("Resume parsed successfully");
+      } catch (error) {
+        console.error("Error parsing resume:", error);
+        toast.error("Failed to parse resume. Please try again.");
+      } finally {
+        setIsParsingResume(false);
+      }
+    } else if (file.name.endsWith('.docx')) {
+      toast.error("DOCX files are not yet supported. Please upload a PDF.");
+    } else {
+      toast.error("Unsupported file format. Please upload a PDF file.");
+    }
+  };
+  
+  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setResumeUploaded(true);
-      setResumeFileName(e.target.files[0].name);
+      await processResumeFile(e.target.files[0]);
     }
   };
   
@@ -36,18 +82,13 @@ const Analyze = () => {
     }
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      if (file.type === 'application/pdf' || file.name.endsWith('.docx')) {
-        setResumeUploaded(true);
-        setResumeFileName(file.name);
-      } else {
-        alert('Only PDF and DOCX files are accepted.');
-      }
+      await processResumeFile(file);
     }
   };
 
@@ -135,7 +176,7 @@ const Analyze = () => {
                       <div>
                         <h2 className="text-xl font-semibold mb-4">Upload Your Resume</h2>
                         <p className="text-gray-600 mb-6">
-                          Upload your resume to help us analyze your skills and experience. Accepted formats: PDF, DOCX.
+                          Upload your resume to help us analyze your skills and experience. Currently supporting PDF files only.
                         </p>
                         <div
                           className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragActive ? 'border-skillsync-300 bg-skillsync-50' : 'border-gray-300'}`}
@@ -144,9 +185,15 @@ const Analyze = () => {
                           onDragLeave={handleDrag}
                           onDrop={handleDrop}
                           onClick={handleBrowseClick}
-                          style={{ cursor: resumeUploaded ? 'default' : 'pointer' }}
+                          style={{ cursor: isParsingResume ? 'wait' : resumeUploaded ? 'default' : 'pointer' }}
                         >
-                          {!resumeUploaded ? (
+                          {isParsingResume ? (
+                            <div className="flex flex-col items-center">
+                              <Loader2 className="h-12 w-12 text-skillsync-300 animate-spin mb-4" />
+                              <p className="text-lg font-medium">Parsing resume...</p>
+                              <p className="text-gray-500 mb-4">This may take a few moments</p>
+                            </div>
+                          ) : !resumeUploaded ? (
                             <>
                               <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                               <p className="text-gray-600 mb-4">Drag and drop your resume here, or click to browse</p>
@@ -154,7 +201,7 @@ const Analyze = () => {
                                 type="file"
                                 id="resume"
                                 className="hidden"
-                                accept=".pdf,.docx"
+                                accept=".pdf"
                                 onChange={handleResumeUpload}
                                 ref={inputRef}
                               />
@@ -178,6 +225,9 @@ const Analyze = () => {
                                 onClick={() => {
                                   setResumeUploaded(false);
                                   setResumeFileName('');
+                                  setResumeText('');
+                                  setSkillsField('');
+                                  setExperienceField('');
                                 }}
                               >
                                 Remove
@@ -192,7 +242,7 @@ const Analyze = () => {
                           type="button" 
                           className="gradient-bg border-none"
                           onClick={nextStep}
-                          disabled={!resumeUploaded}
+                          disabled={!resumeUploaded || isParsingResume}
                         >
                           Continue
                         </Button>
@@ -210,7 +260,7 @@ const Analyze = () => {
                       <div>
                         <h2 className="text-xl font-semibold mb-4">Skills & Experience</h2>
                         <p className="text-gray-600 mb-6">
-                          Tell us more about your professional skills and experience.
+                          We've extracted some information from your resume. Please review and edit as needed.
                         </p>
                         
                         <div className="space-y-4">
@@ -221,6 +271,8 @@ const Analyze = () => {
                               placeholder="List your technical skills (e.g., JavaScript, Python, Project Management, etc.)"
                               className="mt-1"
                               rows={4}
+                              value={skillsField}
+                              onChange={(e) => setSkillsField(e.target.value)}
                             />
                           </div>
                           
@@ -231,6 +283,8 @@ const Analyze = () => {
                               placeholder="Briefly describe your most relevant work experience"
                               className="mt-1"
                               rows={4}
+                              value={experienceField}
+                              onChange={(e) => setExperienceField(e.target.value)}
                             />
                           </div>
                           
