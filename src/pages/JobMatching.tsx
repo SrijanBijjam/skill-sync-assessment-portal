@@ -1,23 +1,23 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Briefcase, User, Check, Search } from "lucide-react";
+import { Briefcase, User, Check, FileText } from "lucide-react";
 
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useNavigate } from 'react-router-dom';
+import { jobDescription } from '@/config/jobDescription';
 
 const JobMatching = () => {
-  const [jobDescription, setJobDescription] = useState('');
   const [isAnalyzed, setIsAnalyzed] = useState(false);
   const navigate = useNavigate();
   
-  const handleSubmitJob = (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    // Auto-analyze when component mounts
     setIsAnalyzed(true);
-  };
+  }, []);
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -28,7 +28,7 @@ const JobMatching = () => {
           <div className="mb-10 text-center">
             <h1 className="text-3xl md:text-4xl font-bold mb-4">Job Matching Analysis</h1>
             <p className="text-lg text-gray-600">
-              Compare your professional profile with job descriptions to see how well you match
+              Comparing your professional profile with the C++ Software Engineer position
             </p>
           </div>
           
@@ -81,7 +81,7 @@ const JobMatching = () => {
               </Card>
             </div>
             
-            {/* Right Column: Job Description Input & Matching Results */}
+            {/* Right Column: Job Description & Matching Results */}
             <div className="lg:col-span-8">
               <Card>
                 <CardHeader className="pb-3">
@@ -91,38 +91,29 @@ const JobMatching = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleSubmitJob}>
-                    <div className="mb-6">
-                      <Textarea 
-                        placeholder="Paste a job description here to analyze your match..."
-                        className="min-h-[200px]"
-                        value={jobDescription}
-                        onChange={(e) => setJobDescription(e.target.value)}
-                      />
+                  <div className="p-4 bg-skillsync-50 rounded-lg mb-6 flex items-start">
+                    <FileText className="h-5 w-5 text-skillsync-700 mt-1 mr-3 flex-shrink-0" />
+                    <div>
+                      <h3 className="font-semibold text-lg mb-2">{jobDescription.title}</h3>
+                      <div className="text-sm text-gray-600 mb-3">
+                        <span className="inline-block mr-4">📍 {jobDescription.location}</span>
+                        <span className="inline-block mr-4">🏢 {jobDescription.companyDetails.employees} employees</span>
+                        <span className="inline-block">💼 Team of {jobDescription.companyDetails.teamSize}</span>
+                      </div>
+                      <p className="text-sm mb-3">{jobDescription.summary.split('\n\n')[0]}</p>
                     </div>
-                    
-                    <div className="mb-8">
-                      <Button 
-                        type="submit" 
-                        className="gradient-bg border-none"
-                        disabled={!jobDescription.trim()}
-                      >
-                        <Search className="mr-2 h-4 w-4" />
-                        Analyze Job Match
-                      </Button>
-                    </div>
-                  </form>
+                  </div>
                   
                   {isAnalyzed && (
                     <div className="space-y-8 animate-fade-in">
                       <div className="p-6 bg-skillsync-100 rounded-xl">
                         <h3 className="text-lg font-semibold mb-3">Overall Match Rating</h3>
                         <div className="flex items-center mb-2">
-                          <span className="text-2xl font-bold mr-4">85%</span>
-                          <Progress value={85} className="h-4 flex-1" />
+                          <span className="text-2xl font-bold mr-4">64%</span>
+                          <Progress value={64} className="h-4 flex-1" />
                         </div>
                         <p className="text-gray-600">
-                          Your profile shows a strong match for this position. You have most of the required skills and experience.
+                          Your profile shows a partial match for this position. While you have a strong technical background, there are some gaps in required experience with C++ and low-latency programming.
                         </p>
                       </div>
                       
@@ -131,38 +122,38 @@ const JobMatching = () => {
                         <div className="space-y-3">
                           <div>
                             <div className="flex justify-between mb-1">
-                              <span className="font-medium">JavaScript</span>
-                              <span>95%</span>
+                              <span className="font-medium">Computer Science Fundamentals</span>
+                              <span>85%</span>
                             </div>
-                            <Progress value={95} className="h-2" />
+                            <Progress value={85} className="h-2" />
                           </div>
                           <div>
                             <div className="flex justify-between mb-1">
-                              <span className="font-medium">React</span>
+                              <span className="font-medium">C++ Programming</span>
+                              <span>40%</span>
+                            </div>
+                            <Progress value={40} className="h-2" />
+                          </div>
+                          <div>
+                            <div className="flex justify-between mb-1">
+                              <span className="font-medium">Low-Latency Development</span>
+                              <span>30%</span>
+                            </div>
+                            <Progress value={30} className="h-2" />
+                          </div>
+                          <div>
+                            <div className="flex justify-between mb-1">
+                              <span className="font-medium">Team Collaboration</span>
                               <span>90%</span>
                             </div>
                             <Progress value={90} className="h-2" />
                           </div>
                           <div>
                             <div className="flex justify-between mb-1">
-                              <span className="font-medium">TypeScript</span>
-                              <span>80%</span>
+                              <span className="font-medium">Software Engineering Practices</span>
+                              <span>75%</span>
                             </div>
-                            <Progress value={80} className="h-2" />
-                          </div>
-                          <div>
-                            <div className="flex justify-between mb-1">
-                              <span className="font-medium">UI/UX Design</span>
-                              <span>70%</span>
-                            </div>
-                            <Progress value={70} className="h-2" />
-                          </div>
-                          <div>
-                            <div className="flex justify-between mb-1">
-                              <span className="font-medium">Team Leadership</span>
-                              <span>85%</span>
-                            </div>
-                            <Progress value={85} className="h-2" />
+                            <Progress value={75} className="h-2" />
                           </div>
                         </div>
                       </div>
@@ -176,7 +167,7 @@ const JobMatching = () => {
                           <ul className="space-y-2">
                             <li className="flex items-start">
                               <Check className="mr-2 h-4 w-4 text-green-500 mt-1 flex-shrink-0" />
-                              <span>Strong JavaScript and frontend framework experience</span>
+                              <span>Strong computer science background</span>
                             </li>
                             <li className="flex items-start">
                               <Check className="mr-2 h-4 w-4 text-green-500 mt-1 flex-shrink-0" />
@@ -184,11 +175,11 @@ const JobMatching = () => {
                             </li>
                             <li className="flex items-start">
                               <Check className="mr-2 h-4 w-4 text-green-500 mt-1 flex-shrink-0" />
-                              <span>Experience with modern development practices</span>
+                              <span>Performance optimization experience</span>
                             </li>
                             <li className="flex items-start">
                               <Check className="mr-2 h-4 w-4 text-green-500 mt-1 flex-shrink-0" />
-                              <span>Relevant project experience in similar domains</span>
+                              <span>Team collaboration and communication</span>
                             </li>
                           </ul>
                         </div>
@@ -201,11 +192,15 @@ const JobMatching = () => {
                           <ul className="space-y-2">
                             <li className="flex items-start">
                               <span className="mr-2 h-4 w-4 text-yellow-500 mt-1 flex-shrink-0">!</span>
-                              <span>Limited experience with GraphQL mentioned in job</span>
+                              <span>Limited C++ programming experience</span>
                             </li>
                             <li className="flex items-start">
                               <span className="mr-2 h-4 w-4 text-yellow-500 mt-1 flex-shrink-0">!</span>
-                              <span>Could highlight more cloud deployment expertise</span>
+                              <span>No specific low-latency system experience</span>
+                            </li>
+                            <li className="flex items-start">
+                              <span className="mr-2 h-4 w-4 text-yellow-500 mt-1 flex-shrink-0">!</span>
+                              <span>Experience in different industry (frontend vs trading)</span>
                             </li>
                           </ul>
                         </div>
@@ -214,7 +209,7 @@ const JobMatching = () => {
                       <div className="border-t pt-6">
                         <h3 className="text-lg font-semibold mb-3">Recommendation</h3>
                         <p className="text-gray-700">
-                          You're a strong candidate for this position! Consider highlighting your leadership experience and frontend optimization work in your application. Adding more details about any GraphQL experience would strengthen your application further.
+                          While you have strong technical fundamentals, this position requires specific expertise in C++ and low-latency systems that isn't evident in your profile. Consider highlighting any relevant C++ projects you've worked on, even if they were academic or personal. Your team leadership and performance optimization experience are valuable transferable skills to emphasize.
                         </p>
                       </div>
                     </div>

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, Check } from "lucide-react";
+import { Upload, Check, Award, FileText, MessageSquareQuestion } from "lucide-react";
 
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -107,11 +108,21 @@ const Analyze = () => {
                   </div>
                 </div>
                 
-                <div className="flex-1">
+                <div className="flex-1 relative">
                   <div className={`w-10 h-10 rounded-full ${currentStep >= 3 ? 'gradient-bg' : 'bg-gray-200'} flex items-center justify-center text-white font-medium mx-auto`}>
                     3
                   </div>
                   <div className="text-center mt-2 text-sm">Personal Info</div>
+                  <div className="absolute w-full h-1 top-5 left-1/2 -z-10 bg-gray-200">
+                    <div className={`h-full ${currentStep >= 4 ? 'gradient-bg' : 'bg-gray-200'}`} style={{width: '100%'}}></div>
+                  </div>
+                </div>
+                
+                <div className="flex-1">
+                  <div className={`w-10 h-10 rounded-full ${currentStep >= 4 ? 'gradient-bg' : 'bg-gray-200'} flex items-center justify-center text-white font-medium mx-auto`}>
+                    4
+                  </div>
+                  <div className="text-center mt-2 text-sm">Questions</div>
                 </div>
               </div>
             </div>
@@ -225,12 +236,44 @@ const Analyze = () => {
                           </div>
                           
                           <div>
+                            <Label 
+                              htmlFor="certifications" 
+                              className="flex items-center gap-2"
+                            >
+                              <Award className="h-4 w-4" /> 
+                              Certifications
+                            </Label>
+                            <Textarea 
+                              id="certifications" 
+                              placeholder="List any professional certifications you have (e.g., AWS Certified Solutions Architect, PMP, CISSP)"
+                              className="mt-1"
+                              rows={3}
+                            />
+                          </div>
+                          
+                          <div>
                             <Label htmlFor="projects">Notable Projects</Label>
                             <Textarea 
                               id="projects" 
                               placeholder="Describe noteworthy projects you've worked on"
                               className="mt-1"
                               rows={4}
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label 
+                              htmlFor="notes" 
+                              className="flex items-center gap-2"
+                            >
+                              <FileText className="h-4 w-4" /> 
+                              Additional Notes
+                            </Label>
+                            <Textarea 
+                              id="notes" 
+                              placeholder="Any additional information or context you'd like to share about your background and career goals"
+                              className="mt-1"
+                              rows={3}
                             />
                           </div>
                         </div>
@@ -302,6 +345,80 @@ const Analyze = () => {
                           <div className="md:col-span-2">
                             <Label htmlFor="github">GitHub Profile (Optional)</Label>
                             <Input id="github" className="mt-1" placeholder="https://github.com/yourusername" />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex justify-between">
+                        <Button 
+                          type="button" 
+                          variant="outline"
+                          onClick={prevStep}
+                        >
+                          Back
+                        </Button>
+                        <Button 
+                          type="button" 
+                          className="gradient-bg border-none"
+                          onClick={nextStep}
+                        >
+                          Continue
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+              
+              {/* Step 4: Hiring Manager Questions */}
+              {currentStep === 4 && (
+                <Card className="animate-fade-in">
+                  <CardContent className="pt-6">
+                    <div className="space-y-6">
+                      <div>
+                        <h2 className="text-xl font-semibold mb-4 flex items-center">
+                          <MessageSquareQuestion className="mr-2 h-5 w-5" />
+                          Hiring Manager Questions
+                        </h2>
+                        <p className="text-gray-600 mb-6">
+                          Please answer these questions from the hiring manager to help us assess your fit for the position.
+                        </p>
+                        
+                        <div className="space-y-5">
+                          <div>
+                            <Label htmlFor="question1" className="font-medium">
+                              1. Describe a challenging technical problem you've solved recently and the approach you took.
+                            </Label>
+                            <Textarea 
+                              id="question1" 
+                              className="mt-2"
+                              rows={4}
+                              placeholder="Please be specific about the problem, your role, and the outcome..."
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="question2" className="font-medium">
+                              2. How do you stay updated with the latest developments in your field, and what recent technology or trend are you most excited about?
+                            </Label>
+                            <Textarea 
+                              id="question2" 
+                              className="mt-2"
+                              rows={4}
+                              placeholder="Share your approach to continuous learning and professional development..."
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="question3" className="font-medium">
+                              3. What is your experience with high-performance, low-latency systems, and how do you approach optimizing code for performance?
+                            </Label>
+                            <Textarea 
+                              id="question3" 
+                              className="mt-2"
+                              rows={4}
+                              placeholder="Describe your experience and methodology for performance optimization..."
+                            />
                           </div>
                         </div>
                       </div>
