@@ -1,92 +1,22 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Briefcase, User, Check, Search, Loader } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { Briefcase, User, Check, Search } from "lucide-react";
 
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useNavigate } from 'react-router-dom';
-import useLocalStorage from '@/hooks/use-local-storage';
-import { UserProfile, JobMatch, analyzeJobMatch } from '@/lib/openai';
 
 const JobMatching = () => {
   const [jobDescription, setJobDescription] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isAnalyzed, setIsAnalyzed] = useState(false);
-  const [jobMatch, setJobMatch] = useState<JobMatch | null>(null);
   const navigate = useNavigate();
   
-  // Get user profile from local storage
-  const [userProfile] = useLocalStorage<Partial<UserProfile>>('skillsync-profile', {});
-  
-  useEffect(() => {
-    // Check if profile exists, if not redirect to analyze page
-    if (!userProfile?.personalInfo?.firstName) {
-      toast({
-        title: "Profile Incomplete",
-        description: "Please complete your profile before job matching",
-      });
-      navigate('/analyze');
-    }
-  }, [userProfile, navigate]);
-  
-  const handleSubmitJob = async (e: React.FormEvent) => {
+  const handleSubmitJob = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!jobDescription.trim()) {
-      toast({
-        title: "Missing Job Description",
-        description: "Please paste a job description to analyze.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    try {
-      setIsAnalyzing(true);
-      
-      // Call OpenAI to analyze job match
-      const matchResults = await analyzeJobMatch(jobDescription, userProfile);
-      
-      setJobMatch(matchResults);
-      setIsAnalyzed(true);
-      
-    } catch (error) {
-      console.error('Error analyzing job match:', error);
-      toast({
-        title: "Analysis Failed",
-        description: "There was a problem analyzing this job. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsAnalyzing(false);
-    }
-  };
-  
-  // Helper function to render skills from the profile
-  const renderProfileSkills = () => {
-    if (!userProfile?.skills || userProfile.skills.length === 0) {
-      return <span className="text-gray-400">No skills listed</span>;
-    }
-    
-    return (
-      <div className="flex flex-wrap gap-2">
-        {userProfile.skills.slice(0, 10).map((skill, index) => (
-          <span key={index} className="px-3 py-1 bg-skillsync-100 text-skillsync-700 rounded-full text-sm">
-            {skill}
-          </span>
-        ))}
-        {userProfile.skills.length > 10 && (
-          <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-            +{userProfile.skills.length - 10} more
-          </span>
-        )}
-      </div>
-    );
+    setIsAnalyzed(true);
   };
   
   return (
@@ -116,28 +46,29 @@ const JobMatching = () => {
                   <div className="space-y-6">
                     <div>
                       <h3 className="font-medium mb-2">Skills</h3>
-                      {renderProfileSkills()}
+                      <div className="flex flex-wrap gap-2">
+                        <span className="px-3 py-1 bg-skillsync-100 text-skillsync-700 rounded-full text-sm">JavaScript</span>
+                        <span className="px-3 py-1 bg-skillsync-100 text-skillsync-700 rounded-full text-sm">React</span>
+                        <span className="px-3 py-1 bg-skillsync-100 text-skillsync-700 rounded-full text-sm">Node.js</span>
+                        <span className="px-3 py-1 bg-skillsync-100 text-skillsync-700 rounded-full text-sm">TypeScript</span>
+                        <span className="px-3 py-1 bg-skillsync-100 text-skillsync-700 rounded-full text-sm">UI/UX</span>
+                        <span className="px-3 py-1 bg-skillsync-100 text-skillsync-700 rounded-full text-sm">API Design</span>
+                      </div>
                     </div>
                     
                     <div>
                       <h3 className="font-medium mb-2">Experience Highlights</h3>
-                      {userProfile?.experience ? (
-                        <p className="text-gray-600">{userProfile.experience}</p>
-                      ) : (
-                        <ul className="list-disc list-inside text-gray-600 space-y-1">
-                          <li>5+ years of frontend development experience</li>
-                          <li>Led a team of 4 developers at TechCorp</li>
-                          <li>Implemented responsive design principles</li>
-                          <li>Improved site performance by 40%</li>
-                        </ul>
-                      )}
+                      <ul className="list-disc list-inside text-gray-600 space-y-1">
+                        <li>5+ years of frontend development experience</li>
+                        <li>Led a team of 4 developers at TechCorp</li>
+                        <li>Implemented responsive design principles</li>
+                        <li>Improved site performance by 40%</li>
+                      </ul>
                     </div>
                     
                     <div>
                       <h3 className="font-medium mb-2">Education</h3>
-                      <p className="text-gray-600">
-                        {userProfile?.education || "B.S. Computer Science, University of Technology"}
-                      </p>
+                      <p className="text-gray-600">B.S. Computer Science, University of Technology</p>
                     </div>
                     
                     <div className="pt-4 border-t">
@@ -167,7 +98,6 @@ const JobMatching = () => {
                         className="min-h-[200px]"
                         value={jobDescription}
                         onChange={(e) => setJobDescription(e.target.value)}
-                        disabled={isAnalyzing}
                       />
                     </div>
                     
@@ -175,56 +105,67 @@ const JobMatching = () => {
                       <Button 
                         type="submit" 
                         className="gradient-bg border-none"
-                        disabled={!jobDescription.trim() || isAnalyzing}
+                        disabled={!jobDescription.trim()}
                       >
-                        {isAnalyzing ? (
-                          <>
-                            <Loader className="mr-2 h-4 w-4 animate-spin" />
-                            Analyzing...
-                          </>
-                        ) : (
-                          <>
-                            <Search className="mr-2 h-4 w-4" />
-                            Analyze Job Match
-                          </>
-                        )}
+                        <Search className="mr-2 h-4 w-4" />
+                        Analyze Job Match
                       </Button>
                     </div>
                   </form>
                   
-                  {isAnalyzed && jobMatch && (
+                  {isAnalyzed && (
                     <div className="space-y-8 animate-fade-in">
                       <div className="p-6 bg-skillsync-100 rounded-xl">
                         <h3 className="text-lg font-semibold mb-3">Overall Match Rating</h3>
                         <div className="flex items-center mb-2">
-                          <span className="text-2xl font-bold mr-4">{jobMatch.overallMatch}%</span>
-                          <Progress value={jobMatch.overallMatch} className="h-4 flex-1" />
+                          <span className="text-2xl font-bold mr-4">85%</span>
+                          <Progress value={85} className="h-4 flex-1" />
                         </div>
                         <p className="text-gray-600">
-                          {jobMatch.overallMatch >= 80 
-                            ? "Your profile shows a strong match for this position. You have most of the required skills and experience."
-                            : jobMatch.overallMatch >= 60
-                            ? "Your profile shows a good match for this position. You have many of the required skills and experience."
-                            : "Your profile shows some matches with this position, but there may be gaps in skills or experience."}
+                          Your profile shows a strong match for this position. You have most of the required skills and experience.
                         </p>
                       </div>
                       
-                      {jobMatch.skillsAnalysis && jobMatch.skillsAnalysis.length > 0 && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-4">Skills Analysis</h3>
-                          <div className="space-y-3">
-                            {jobMatch.skillsAnalysis.map((skill, index) => (
-                              <div key={index}>
-                                <div className="flex justify-between mb-1">
-                                  <span className="font-medium">{skill.name}</span>
-                                  <span>{skill.percentage}%</span>
-                                </div>
-                                <Progress value={skill.percentage} className="h-2" />
-                              </div>
-                            ))}
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">Skills Analysis</h3>
+                        <div className="space-y-3">
+                          <div>
+                            <div className="flex justify-between mb-1">
+                              <span className="font-medium">JavaScript</span>
+                              <span>95%</span>
+                            </div>
+                            <Progress value={95} className="h-2" />
+                          </div>
+                          <div>
+                            <div className="flex justify-between mb-1">
+                              <span className="font-medium">React</span>
+                              <span>90%</span>
+                            </div>
+                            <Progress value={90} className="h-2" />
+                          </div>
+                          <div>
+                            <div className="flex justify-between mb-1">
+                              <span className="font-medium">TypeScript</span>
+                              <span>80%</span>
+                            </div>
+                            <Progress value={80} className="h-2" />
+                          </div>
+                          <div>
+                            <div className="flex justify-between mb-1">
+                              <span className="font-medium">UI/UX Design</span>
+                              <span>70%</span>
+                            </div>
+                            <Progress value={70} className="h-2" />
+                          </div>
+                          <div>
+                            <div className="flex justify-between mb-1">
+                              <span className="font-medium">Team Leadership</span>
+                              <span>85%</span>
+                            </div>
+                            <Progress value={85} className="h-2" />
                           </div>
                         </div>
-                      )}
+                      </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
@@ -233,12 +174,22 @@ const JobMatching = () => {
                             Strengths
                           </h3>
                           <ul className="space-y-2">
-                            {jobMatch.strengths.map((strength, index) => (
-                              <li key={index} className="flex items-start">
-                                <Check className="mr-2 h-4 w-4 text-green-500 mt-1 flex-shrink-0" />
-                                <span>{strength}</span>
-                              </li>
-                            ))}
+                            <li className="flex items-start">
+                              <Check className="mr-2 h-4 w-4 text-green-500 mt-1 flex-shrink-0" />
+                              <span>Strong JavaScript and frontend framework experience</span>
+                            </li>
+                            <li className="flex items-start">
+                              <Check className="mr-2 h-4 w-4 text-green-500 mt-1 flex-shrink-0" />
+                              <span>Proven leadership experience</span>
+                            </li>
+                            <li className="flex items-start">
+                              <Check className="mr-2 h-4 w-4 text-green-500 mt-1 flex-shrink-0" />
+                              <span>Experience with modern development practices</span>
+                            </li>
+                            <li className="flex items-start">
+                              <Check className="mr-2 h-4 w-4 text-green-500 mt-1 flex-shrink-0" />
+                              <span>Relevant project experience in similar domains</span>
+                            </li>
                           </ul>
                         </div>
                         
@@ -248,12 +199,14 @@ const JobMatching = () => {
                             Areas for Improvement
                           </h3>
                           <ul className="space-y-2">
-                            {jobMatch.improvements.map((improvement, index) => (
-                              <li key={index} className="flex items-start">
-                                <span className="mr-2 h-4 w-4 text-yellow-500 mt-1 flex-shrink-0">!</span>
-                                <span>{improvement}</span>
-                              </li>
-                            ))}
+                            <li className="flex items-start">
+                              <span className="mr-2 h-4 w-4 text-yellow-500 mt-1 flex-shrink-0">!</span>
+                              <span>Limited experience with GraphQL mentioned in job</span>
+                            </li>
+                            <li className="flex items-start">
+                              <span className="mr-2 h-4 w-4 text-yellow-500 mt-1 flex-shrink-0">!</span>
+                              <span>Could highlight more cloud deployment expertise</span>
+                            </li>
                           </ul>
                         </div>
                       </div>
@@ -261,7 +214,7 @@ const JobMatching = () => {
                       <div className="border-t pt-6">
                         <h3 className="text-lg font-semibold mb-3">Recommendation</h3>
                         <p className="text-gray-700">
-                          {jobMatch.recommendation}
+                          You're a strong candidate for this position! Consider highlighting your leadership experience and frontend optimization work in your application. Adding more details about any GraphQL experience would strengthen your application further.
                         </p>
                       </div>
                     </div>

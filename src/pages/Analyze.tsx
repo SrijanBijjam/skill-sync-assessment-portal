@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -6,11 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Upload, Check, Loader } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-import { parseResume } from "@/lib/resume-parser";
-import { analyzeResume, UserProfile } from "@/lib/openai";
-import useLocalStorage from "@/hooks/use-local-storage";
+import { Upload, Check } from "lucide-react";
 
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -20,52 +15,13 @@ const Analyze = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [resumeUploaded, setResumeUploaded] = useState(false);
   const [resumeFileName, setResumeFileName] = useState('');
-  const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
   
-  // Form state
-  const [skills, setSkills] = useState('');
-  const [experience, setExperience] = useState('');
-  const [projects, setProjects] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [location, setLocation] = useState('');
-  const [linkedin, setLinkedin] = useState('');
-  const [github, setGithub] = useState('');
-  
-  // Local storage for profile data
-  const [userProfile, setUserProfile] = useLocalStorage<Partial<UserProfile>>('skillsync-profile', {});
-  
-  // Load profile data on component mount
-  React.useEffect(() => {
-    if (userProfile) {
-      if (userProfile.skills) setSkills(userProfile.skills.join(', '));
-      if (userProfile.experience) setExperience(userProfile.experience);
-      if (userProfile.projects) setProjects(userProfile.projects);
-      
-      if (userProfile.personalInfo) {
-        const { personalInfo } = userProfile;
-        setFirstName(personalInfo.firstName || '');
-        setLastName(personalInfo.lastName || '');
-        setEmail(personalInfo.email || '');
-        setPhone(personalInfo.phone || '');
-        setLocation(personalInfo.location || '');
-        setLinkedin(personalInfo.linkedin || '');
-        setGithub(personalInfo.github || '');
-      }
-    }
-  }, [userProfile]);
-  
-  const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
       setResumeUploaded(true);
-      setResumeFileName(file.name);
-      setResumeFile(file);
+      setResumeFileName(e.target.files[0].name);
     }
   };
   
@@ -89,13 +45,8 @@ const Analyze = () => {
       if (file.type === 'application/pdf' || file.name.endsWith('.docx')) {
         setResumeUploaded(true);
         setResumeFileName(file.name);
-        setResumeFile(file);
       } else {
-        toast({
-          title: "Invalid File Type",
-          description: "Only PDF and DOCX files are accepted.",
-          variant: "destructive",
-        });
+        alert('Only PDF and DOCX files are accepted.');
       }
     }
   };
@@ -104,83 +55,12 @@ const Analyze = () => {
     inputRef.current?.click();
   };
   
-  const processResume = async () => {
-    if (!resumeFile) return;
-    
-    try {
-      setIsLoading(true);
-      const resumeText = await parseResume(resumeFile);
-      const profileData = await analyzeResume(resumeText);
-      
-      // Update form fields with extracted data
-      if (profileData.skills) setSkills(profileData.skills.join(', '));
-      if (profileData.experience) setExperience(profileData.experience);
-      if (profileData.education) {
-        setUserProfile({
-          ...userProfile,
-          education: profileData.education,
-          resumeText,
-          skills: profileData.skills || [],
-          experience: profileData.experience || '',
-          projects: profileData.projects || ''
-        });
-      }
-      
-      toast({
-        title: "Resume Processed",
-        description: "Your resume has been analyzed successfully.",
-      });
-      
-      nextStep();
-    } catch (error) {
-      console.error('Error processing resume:', error);
-      toast({
-        title: "Processing Failed",
-        description: "Failed to process your resume. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Save all profile data to local storage
-    setUserProfile({
-      ...userProfile,
-      personalInfo: {
-        firstName,
-        lastName,
-        email,
-        phone,
-        location,
-        linkedin,
-        github
-      },
-      skills: skills.split(',').map(skill => skill.trim()).filter(skill => skill),
-      experience,
-      projects
-    });
-    
     navigate('/job-matching');
   };
   
   const nextStep = () => {
-    // Save data for current step
-    if (currentStep === 1 && resumeFile) {
-      processResume();
-      return;
-    } else if (currentStep === 2) {
-      setUserProfile({
-        ...userProfile,
-        skills: skills.split(',').map(skill => skill.trim()).filter(skill => skill),
-        experience,
-        projects
-      });
-    }
-    
     setCurrentStep(current => current + 1);
     window.scrollTo(0, 0);
   };
@@ -253,7 +133,7 @@ const Analyze = () => {
                           onDragOver={handleDrag}
                           onDragLeave={handleDrag}
                           onDrop={handleDrop}
-                          onClick={!resumeUploaded ? handleBrowseClick : undefined}
+                          onClick={handleBrowseClick}
                           style={{ cursor: resumeUploaded ? 'default' : 'pointer' }}
                         >
                           {!resumeUploaded ? (
@@ -288,7 +168,6 @@ const Analyze = () => {
                                 onClick={() => {
                                   setResumeUploaded(false);
                                   setResumeFileName('');
-                                  setResumeFile(null);
                                 }}
                               >
                                 Remove
@@ -303,16 +182,9 @@ const Analyze = () => {
                           type="button" 
                           className="gradient-bg border-none"
                           onClick={nextStep}
-                          disabled={!resumeUploaded || isLoading}
+                          disabled={!resumeUploaded}
                         >
-                          {isLoading ? (
-                            <>
-                              <Loader className="mr-2 h-4 w-4 animate-spin" />
-                              Processing Resume...
-                            </>
-                          ) : (
-                            'Continue'
-                          )}
+                          Continue
                         </Button>
                       </div>
                     </div>
@@ -336,11 +208,9 @@ const Analyze = () => {
                             <Label htmlFor="skills">Technical Skills</Label>
                             <Textarea 
                               id="skills" 
-                              placeholder="List your technical skills separated by commas (e.g., JavaScript, Python, Project Management)"
+                              placeholder="List your technical skills (e.g., JavaScript, Python, Project Management, etc.)"
                               className="mt-1"
                               rows={4}
-                              value={skills}
-                              onChange={(e) => setSkills(e.target.value)}
                             />
                           </div>
                           
@@ -351,8 +221,6 @@ const Analyze = () => {
                               placeholder="Briefly describe your most relevant work experience"
                               className="mt-1"
                               rows={4}
-                              value={experience}
-                              onChange={(e) => setExperience(e.target.value)}
                             />
                           </div>
                           
@@ -363,8 +231,6 @@ const Analyze = () => {
                               placeholder="Describe noteworthy projects you've worked on"
                               className="mt-1"
                               rows={4}
-                              value={projects}
-                              onChange={(e) => setProjects(e.target.value)}
                             />
                           </div>
                         </div>
@@ -405,80 +271,37 @@ const Analyze = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <Label htmlFor="firstName">First Name</Label>
-                            <Input 
-                              id="firstName" 
-                              className="mt-1" 
-                              value={firstName}
-                              onChange={(e) => setFirstName(e.target.value)}
-                              required
-                            />
+                            <Input id="firstName" className="mt-1" />
                           </div>
                           
                           <div>
                             <Label htmlFor="lastName">Last Name</Label>
-                            <Input 
-                              id="lastName" 
-                              className="mt-1" 
-                              value={lastName}
-                              onChange={(e) => setLastName(e.target.value)}
-                              required
-                            />
+                            <Input id="lastName" className="mt-1" />
                           </div>
                           
                           <div>
                             <Label htmlFor="email">Email Address</Label>
-                            <Input 
-                              id="email" 
-                              type="email" 
-                              className="mt-1"
-                              value={email}
-                              onChange={(e) => setEmail(e.target.value)}
-                              required
-                            />
+                            <Input id="email" type="email" className="mt-1" />
                           </div>
                           
                           <div>
                             <Label htmlFor="phone">Phone Number</Label>
-                            <Input 
-                              id="phone" 
-                              className="mt-1"
-                              value={phone}
-                              onChange={(e) => setPhone(e.target.value)}
-                              required
-                            />
+                            <Input id="phone" className="mt-1" />
                           </div>
                           
                           <div className="md:col-span-2">
                             <Label htmlFor="location">Location (City, State, Country)</Label>
-                            <Input 
-                              id="location" 
-                              className="mt-1"
-                              value={location}
-                              onChange={(e) => setLocation(e.target.value)}
-                              required
-                            />
+                            <Input id="location" className="mt-1" />
                           </div>
                           
                           <div className="md:col-span-2">
                             <Label htmlFor="linkedin">LinkedIn Profile (Optional)</Label>
-                            <Input 
-                              id="linkedin" 
-                              className="mt-1" 
-                              placeholder="https://linkedin.com/in/yourprofile"
-                              value={linkedin}
-                              onChange={(e) => setLinkedin(e.target.value)}
-                            />
+                            <Input id="linkedin" className="mt-1" placeholder="https://linkedin.com/in/yourprofile" />
                           </div>
                           
                           <div className="md:col-span-2">
                             <Label htmlFor="github">GitHub Profile (Optional)</Label>
-                            <Input 
-                              id="github" 
-                              className="mt-1" 
-                              placeholder="https://github.com/yourusername"
-                              value={github}
-                              onChange={(e) => setGithub(e.target.value)}
-                            />
+                            <Input id="github" className="mt-1" placeholder="https://github.com/yourusername" />
                           </div>
                         </div>
                       </div>
