@@ -1,9 +1,10 @@
 
-import * as pdfjs from 'pdfjs-dist';
-import { GlobalWorkerOptions } from 'pdfjs-dist';
+// We need to import the ES module version of pdfjs-dist
+import * as pdfjs from 'pdfjs-dist/es5/build/pdf';
+import { GlobalWorkerOptions } from 'pdfjs-dist/es5/build/pdf';
 
 // Initialize PDF.js worker (required for PDF parsing)
-const pdfjsVersion = '2.16.105'; // Match the version you're using
+const pdfjsVersion = '2.16.105'; // Match the version we're using
 GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.js`;
 
 /**
