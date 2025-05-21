@@ -126,6 +126,11 @@ Here's an overview of the main folders and files:
       PersonalInfoStep.tsx      # Form for reviewing/editing personal info
       QuestionsStep.tsx         # Additional questions for the candidate
       StepProgress.tsx          # Visual step progress indicator
+    /job-matching
+      JobMatchAnalysisCard.tsx  # Displays detailed AI-powered job match analysis (scores, strengths, gaps, recommendations)
+      JobDescriptionCard.tsx    # Shows the job description being matched against
+      ProfileSummaryCard.tsx    # Shows the AI-generated profile summary
+      useJobMatchAnalysis.ts    # Custom hook for running and managing job match analysis
     Footer.tsx                  # Footer component (centered content)
     Navbar.tsx                  # Top navigation bar
     ui/                         # Reusable UI components (buttons, cards, etc.)
@@ -155,11 +160,16 @@ Here's an overview of the main folders and files:
 
 - **/components**: All React components, including UI and feature-specific components.
 - **/components/analyze**: Steps for the multi-step analysis flow.
+- **/components/job-matching**: Components and hooks for displaying and managing the AI-powered job matching results:
+  - `JobMatchAnalysisCard.tsx`: Shows the detailed job match analysis, including scores, strengths, gaps, and recommendations.
+  - `JobDescriptionCard.tsx`: Displays the job description being matched against.
+  - `ProfileSummaryCard.tsx`: Shows the AI-generated summary of the candidate's profile.
+  - `useJobMatchAnalysis.ts`: Custom React hook for running the job match analysis and managing its state/results.
 - **/components/ui**: Reusable UI primitives (buttons, cards, etc.).
 - **/pages**: Top-level pages/routes.
 - **/hooks**: Custom React hooks for state and data management.
 - **/lib**: Utility libraries, including the local resume parser.
-- **/services**: API integrations (OpenAI, external resume parser).
+- **/services**: API integrations (OpenAI for summary and job matching).
 - **/config**: Static configuration, such as the job description.
 - **/assets**: Static assets (images, icons).
 - **index.css**: Tailwind and global styles.
