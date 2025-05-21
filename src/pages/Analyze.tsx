@@ -29,9 +29,7 @@ const Analyze = () => {
   
   // If we have profile data and are on step 1 with a resume already uploaded, skip to step 2
   useEffect(() => {
-    if (!isLoading && profileData.resumeUploaded && currentStep === 1) {
-      toast.info("Resuming from your last session");
-    }
+    // Just load the profile data without showing a toast notification
   }, [isLoading, profileData.resumeUploaded, currentStep]);
   
   const handleResumeStatusChange = (isUploaded: boolean, fileName: string) => {
@@ -172,28 +170,11 @@ const Analyze = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <main className="flex-grow py-10">
-        <div className="container">
-          <div className="max-w-4xl mx-auto">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold mb-2">Build Your Profile</h1>
-              <p className="text-gray-600">
-                Complete your professional profile to get matched with job opportunities.
-              </p>
-            </div>
-
-            <StepProgress currentStep={currentStep} />
-            
-            <div className="mt-8">
-              {isLoading ? (
-                <div className="flex justify-center py-20">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-skillsync-700"></div>
-                </div>
-              ) : (
-                renderStep()
-              )}
-            </div>
-          </div>
+      <main className="flex-grow container mx-auto py-12 px-4">
+        <StepProgress currentStep={currentStep} />
+        
+        <div className="mt-8 max-w-3xl mx-auto">
+          {renderStep()}
         </div>
       </main>
       
