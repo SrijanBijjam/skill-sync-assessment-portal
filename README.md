@@ -142,7 +142,6 @@ Here's an overview of the main folders and files:
     utils.ts                    # Utility functions
   /services
     openai.ts                   # OpenAI API integration for summary and job matching
-    resumeParserApi.ts          # (If using) External Resume Parser API integration
   /config
     jobDescription.ts           # The job description used for AI matching
   /assets
