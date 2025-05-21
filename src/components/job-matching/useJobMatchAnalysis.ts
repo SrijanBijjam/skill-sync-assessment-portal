@@ -64,11 +64,11 @@ export function useJobMatchAnalysis() {
   
   // Default skills for demo if no analysis exists
   const skillsAnalysis = profileData.jobMatchAnalysis?.skillsAnalysis || {
-    "Computer Science Fundamentals": 85,
-    "C++ Programming": 40,
-    "Low-Latency Development": 30,
-    "Team Collaboration": 90,
-    "Software Engineering Practices": 75
+    "Technical Skills": 85,
+    "Domain Knowledge": 70,
+    "Communication": 80,
+    "Problem Solving": 90,
+    "Industry Experience": 75
   };
   
   return {

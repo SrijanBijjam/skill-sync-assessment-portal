@@ -1,4 +1,3 @@
-
 import { ProfileData } from '@/hooks/useProfileData';
 import { jobDescription } from '@/config/jobDescription';
 
@@ -175,8 +174,10 @@ export async function analyzeJobMatch(profileData: ProfileData): Promise<{
 2. A list of 3-5 strengths (skills/experiences that align well with the job)
 3. A list of 2-4 gaps or improvement areas
 4. A list of 2-3 specific recommendations for the candidate
-5. A skills analysis with scores (0-100) for these categories: Computer Science Fundamentals, C++ Programming, Low-Latency Development, Team Collaboration, Software Engineering Practices
+5. A skills analysis with scores (0-100) for 4-6 key skills extracted from the job description requirements
 6. A brief summary paragraph explaining the match results
+
+First, extract 4-6 key skills or competency areas from the job description requirements. Then analyze how well the candidate matches each of these skills.
 
 Format your response as valid JSON like this:
 {
@@ -185,11 +186,11 @@ Format your response as valid JSON like this:
   "gaps": ["Gap 1", "Gap 2"],
   "recommendations": ["Recommendation 1", "Recommendation 2"],
   "skillsAnalysis": {
-    "Computer Science Fundamentals": 80,
-    "C++ Programming": 70,
-    "Low-Latency Development": 60,
-    "Team Collaboration": 90,
-    "Software Engineering Practices": 75
+    "Key Skill 1": 80,
+    "Key Skill 2": 70,
+    "Key Skill 3": 60,
+    "Key Skill 4": 90,
+    "Key Skill 5": 75
   },
   "summary": "Summary text here."
 }`
@@ -235,13 +236,7 @@ Please analyze how well this candidate matches the job requirements and provide 
       strengths: parsed.strengths || [],
       gaps: parsed.gaps || [],
       recommendations: parsed.recommendations || [],
-      skillsAnalysis: parsed.skillsAnalysis || {
-        "Computer Science Fundamentals": 0,
-        "C++ Programming": 0,
-        "Low-Latency Development": 0,
-        "Team Collaboration": 0,
-        "Software Engineering Practices": 0
-      },
+      skillsAnalysis: parsed.skillsAnalysis || {},
       summary: parsed.summary || "Unable to generate summary."
     };
   } catch (error) {
@@ -251,13 +246,7 @@ Please analyze how well this candidate matches the job requirements and provide 
       strengths: ['Unable to analyze strengths at this time.'],
       gaps: ['Unable to analyze gaps at this time.'],
       recommendations: ['Please try again later.'],
-      skillsAnalysis: {
-        "Computer Science Fundamentals": 0,
-        "C++ Programming": 0,
-        "Low-Latency Development": 0,
-        "Team Collaboration": 0,
-        "Software Engineering Practices": 0
-      },
+      skillsAnalysis: {},
       summary: "An error occurred while analyzing the job match. Please try again later."
     };
   }
