@@ -30,6 +30,8 @@ SkillSync is designed to help candidates:
 
 The app is built with **React**, **TypeScript**, **Vite**, **Tailwind CSS**, and leverages **OpenAI** for AI features.
 
+The (working) deployed link to the project: https://skill-sync-assessment-portal.vercel.app 
+
 ---
 
 ## Main Features
