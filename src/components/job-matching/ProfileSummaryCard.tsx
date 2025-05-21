@@ -63,7 +63,7 @@ const ProfileSummaryCard: React.FC<ProfileSummaryCardProps> = ({ profileData, is
             
             <div className="pt-4 border-t">
               <Button variant="outline" className="w-full" onClick={() => navigate('/analyze')}>
-                Edit Your Profile
+                Go Back
               </Button>
             </div>
           </div>

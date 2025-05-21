@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from "@/components/ui/sonner";
@@ -85,11 +84,18 @@ const Analyze = () => {
     // Update the hiring manager questions
     updateHiringManagerQuestions(data);
 
-    // Navigate to job matching page after short delay
-    setTimeout(() => {
+    try {
+      // Navigate to job matching page after short delay
+      setTimeout(() => {
+        setIsSubmitting(false);
+        navigate('/job-matching');
+      }, 1500);
+    } catch (error) {
+      // If navigation fails for any reason, show an error and reset submission state
+      console.error("Navigation error:", error);
+      toast.error("An error occurred. Please try again.");
       setIsSubmitting(false);
-      navigate('/job-matching');
-    }, 1500);
+    }
   };
   
   const nextStep = () => {

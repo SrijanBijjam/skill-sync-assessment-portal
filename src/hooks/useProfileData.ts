@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { z } from 'zod';
 
@@ -164,6 +163,13 @@ export function useProfileData() {
     localStorage.removeItem(PROFILE_DATA_KEY);
   };
 
+  // Add a function to completely clear localStorage
+  const clearAllData = () => {
+    localStorage.clear();
+    setProfileData(initialProfileData);
+    window.location.reload();
+  };
+
   return {
     profileData,
     isLoading,
@@ -173,6 +179,7 @@ export function useProfileData() {
     updateHiringManagerQuestions,
     updateProfileSummary,
     updateJobMatchAnalysis,
-    resetProfileData
+    resetProfileData,
+    clearAllData
   };
 }
