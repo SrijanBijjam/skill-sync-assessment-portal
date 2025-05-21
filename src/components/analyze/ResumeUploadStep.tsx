@@ -62,6 +62,7 @@ const ResumeUploadStep: React.FC<ResumeUploadStepProps> = ({
   };
   
   const handleResumeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("File input change detected", e.target.files);
     if (e.target.files && e.target.files[0]) {
       await processResumeFile(e.target.files[0]);
     }
@@ -87,8 +88,14 @@ const ResumeUploadStep: React.FC<ResumeUploadStepProps> = ({
     }
   };
 
-  const handleBrowseClick = () => {
-    inputRef.current?.click();
+  const handleBrowseClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (inputRef.current) {
+      // Reset the input value to ensure onChange triggers even if selecting the same file
+      inputRef.current.value = '';
+      inputRef.current.click();
+    }
   };
   
   return (
@@ -106,7 +113,12 @@ const ResumeUploadStep: React.FC<ResumeUploadStepProps> = ({
               onDragOver={handleDrag}
               onDragLeave={handleDrag}
               onDrop={handleDrop}
-              onClick={isParsingResume || resumeUploaded ? undefined : handleBrowseClick}
+              onClick={isParsingResume || resumeUploaded ? undefined : () => {
+                if (inputRef.current) {
+                  inputRef.current.value = '';
+                  inputRef.current.click();
+                }
+              }}
               style={{ cursor: isParsingResume ? 'wait' : resumeUploaded ? 'default' : 'pointer' }}
             >
               {isParsingResume ? (
@@ -127,11 +139,14 @@ const ResumeUploadStep: React.FC<ResumeUploadStepProps> = ({
                     onChange={handleResumeUpload}
                     ref={inputRef}
                   />
-                  <Label htmlFor="resume">
-                    <Button type="button" variant="outline" className="cursor-pointer" onClick={handleBrowseClick}>
-                      Browse Files
-                    </Button>
-                  </Label>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="cursor-pointer" 
+                    onClick={handleBrowseClick}
+                  >
+                    Browse Files
+                  </Button>
                 </>
               ) : (
                 <div className="flex flex-col items-center">
