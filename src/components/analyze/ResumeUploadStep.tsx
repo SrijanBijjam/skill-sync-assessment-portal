@@ -7,6 +7,7 @@ import { Upload, Check, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { parseResume } from '@/lib/resume-parser';
 import { useProfileData } from '@/hooks/useProfileData';
+import { useNavigate } from 'react-router-dom';
 
 interface ResumeUploadStepProps {
   resumeUploaded: boolean;
@@ -28,6 +29,7 @@ const ResumeUploadStep: React.FC<ResumeUploadStepProps> = ({
   const [dragActive, setDragActive] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { clearAllData } = useProfileData();
+  const navigate = useNavigate();
   
   const processResumeFile = async (file: File) => {
     if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
@@ -147,6 +149,7 @@ const ResumeUploadStep: React.FC<ResumeUploadStepProps> = ({
                       toast.success("Profile data cleared", {
                         description: "Previous analysis data has been reset."
                       });
+                      navigate('/');
                     }}
                   >
                     Remove

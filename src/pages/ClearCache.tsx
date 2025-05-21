@@ -16,9 +16,7 @@ const ClearCache: React.FC = () => {
       toast.success("Cache cleared successfully", {
         description: "All stored data has been removed."
       });
-      setTimeout(() => {
-        navigate('/');
-      }, 1000);
+      navigate('/');
     } catch (error) {
       console.error("Error clearing cache:", error);
       toast.error("Failed to clear cache", {

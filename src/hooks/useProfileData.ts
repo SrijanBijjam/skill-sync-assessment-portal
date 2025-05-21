@@ -167,7 +167,6 @@ export function useProfileData() {
   const clearAllData = () => {
     localStorage.clear();
     setProfileData(initialProfileData);
-    window.location.reload();
   };
 
   return {
